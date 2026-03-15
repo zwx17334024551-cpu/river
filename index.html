@@ -121,31 +121,38 @@
 
         @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 
-        /* ======= 手机端深度适配 ======= */
+        /* ======= 手机端极致压缩适配 ======= */
         @media (max-width: 768px) {
-            /* 控制面板自适应拉宽，减小间距 */
-            #ui-panel { bottom: 20px; right: 15px; left: 15px; padding: 15px; gap: 12px; }
-            .control-group input[type="range"] { width: 100%; }
+            /* 控制面板：整体极致缩小 */
+            #ui-panel { bottom: 15px; right: 12px; left: 12px; padding: 12px 15px; gap: 10px; border-radius: 15px; }
+            .control-group label { font-size: 11px; margin-bottom: -2px; }
+            .control-group input[type="range"] { width: 100%; height: 14px; }
+            .control-group input[type="range"]::-webkit-slider-thumb { height: 16px; width: 16px; margin-top: -6px; border-width: 2px;}
+            .control-group input[type="range"]::-webkit-slider-runnable-track { height: 4px; }
             
-            /* 数据面板变身 2x2 紧凑网格，完美避开重叠 */
+            .btn-group { gap: 8px; }
+            button.action-btn { padding: 8px 10px; font-size: 12px; border-radius: 12px; }
+            
+            /* 数据面板：精巧小网格，避开滑动条 */
             #stats { 
-                bottom: 185px; left: 15px; right: 15px; 
+                bottom: 145px; left: 12px; right: 12px; 
                 flex-direction: row; flex-wrap: wrap; justify-content: space-between;
-                padding: 12px 15px; gap: 8px 0;
+                padding: 10px 15px; gap: 6px 0; border-radius: 12px;
             }
-            #stats div { width: 48%; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
-            .stat-val { min-width: auto; }
+            #stats div { width: 48%; font-size: 11px; display: flex; justify-content: space-between; align-items: center; }
+            .stat-val { min-width: auto; font-size: 12px; }
             
-            /* 顶部元素缩小 */
-            #top-ui { top: 20px; left: 15px; }
-            .top-btn { width: 40px; height: 40px; }
+            /* 顶部音量缩小 */
+            #top-ui { top: 15px; left: 12px; }
+            .top-btn { width: 36px; height: 36px; }
+            .top-btn svg { width: 18px; height: 18px; }
             
-            /* 时间轮盘缩小并微调 */
-            #time-dial-wrapper { top: 20px; right: 15px; width: 65px; height: 65px; }
+            /* 时间轮盘保持原定大小，只微调位置 */
+            #time-dial-wrapper { top: 15px; right: 12px; width: 65px; height: 65px; }
             #time-dial-knob { width: 12px; height: 12px; top: 4px; }
-            #time-dial-text { font-size: 11px; margin-top: 3px; }
+            #time-dial-text { font-size: 12px; margin-top: 2px; }
             
-            #toast { font-size: 14px; white-space: normal; width: 85%; padding: 12px 20px; top: 100px; }
+            #toast { font-size: 13px; padding: 8px 16px; top: 90px; border-radius: 20px; width: 85%; white-space: normal;}
         }
     </style>
 </head>
@@ -228,7 +235,7 @@
     let isDraggingTime = false;
     let globalFrames = 0;
     
-    let curWeatherOp = 0; // 0=晴天, 1=雨天
+    let curWeatherOp = 0; 
     let weatherTimer = 0;
     let targetWeatherOp = 0;
 
@@ -263,13 +270,13 @@
 
     /** --- 极致梦幻唯美色彩系统 --- */
     const colorStops =[
-        { t: 0,  c: { sand:[18, 16, 40], waterBase:[0, 191, 255], waterDeep:[25, 25, 112], cloud:[60, 50, 90] } }, // 午夜仙踪
-        { t: 5,  c: { sand:[230, 200, 240], waterBase:[255, 182, 193], waterDeep:[138, 43, 226], cloud:[255, 200, 255] } }, // 魔法黎明
-        { t: 7,  c: { sand:[255, 248, 220], waterBase:[0, 255, 255], waterDeep:[0, 119, 190], cloud:[255, 250, 250] } }, // 清晨高光
-        { t: 12, c: { sand:[255, 250, 240], waterBase:[64, 224, 208], waterDeep:[0, 191, 255], cloud:[255, 255, 255] } }, // 马尔代夫正午
-        { t: 16, c: { sand:[255, 235, 205], waterBase:[135, 206, 235], waterDeep:[30, 144, 255], cloud:[255, 250, 245] } }, // 蔚蓝午后
-        { t: 18.5, c:{ sand:[255, 218, 185], waterBase:[255, 127, 80], waterDeep:[255, 20, 147], cloud:[255, 180, 200] } }, // 绝美火烧云
-        { t: 20, c: { sand:[75, 0, 130], waterBase:[147, 112, 219], waterDeep:[72, 61, 139], cloud:[100, 80, 150] } }, // 紫罗兰薄暮
+        { t: 0,  c: { sand:[18, 16, 40], waterBase:[0, 191, 255], waterDeep:[25, 25, 112], cloud:[60, 50, 90] } },
+        { t: 5,  c: { sand:[230, 200, 240], waterBase:[255, 182, 193], waterDeep:[138, 43, 226], cloud:[255, 200, 255] } },
+        { t: 7,  c: { sand:[255, 248, 220], waterBase:[0, 255, 255], waterDeep:[0, 119, 190], cloud:[255, 250, 250] } },
+        { t: 12, c: { sand:[255, 250, 240], waterBase:[64, 224, 208], waterDeep:[0, 191, 255], cloud:[255, 255, 255] } },
+        { t: 16, c: { sand:[255, 235, 205], waterBase:[135, 206, 235], waterDeep:[30, 144, 255], cloud:[255, 250, 245] } },
+        { t: 18.5, c:{ sand:[255, 218, 185], waterBase:[255, 127, 80], waterDeep:[255, 20, 147], cloud:[255, 180, 200] } },
+        { t: 20, c: { sand:[75, 0, 130], waterBase:[147, 112, 219], waterDeep:[72, 61, 139], cloud:[100, 80, 150] } },
         { t: 24, c: { sand:[18, 16, 40], waterBase:[0, 191, 255], waterDeep:[25, 25, 112], cloud:[60, 50, 90] } }
     ];
 
@@ -294,16 +301,26 @@
 
     function rgbToStr(arr, alpha=1) { return `rgba(${arr[0]}, ${arr[1]}, ${arr[2]}, ${alpha})`; }
 
+    /** --- 完美连续的丝滑光影系统重写 --- */
     function getShadowVector() {
-        let angle, length;
-        if (timeOfDay >= 6 && timeOfDay <= 18) {
-            let sunProgress = (timeOfDay - 6) / 12;
-            angle = sunProgress * Math.PI; 
-            length = Math.abs(sunProgress - 0.5) * 100 + 10; 
-        } else {
-            angle = (timeOfDay / 24) * Math.PI; length = 20; 
-        }
-        return { dx: -Math.cos(angle) * length, dy: Math.sin(angle) * length * 0.3 };
+        // 利用太阳/月亮 24小时 360度公转，实现完美平滑过渡
+        // 6:00 (日出) 角度为0； 12:00 (正午) 角度为PI/2； 18:00 (日落) 角度为PI
+        let angle = ((timeOfDay - 6) / 24) * Math.PI * 2;
+        
+        // 投影最长的时候在日出和日落，最短在正午和午夜 (利用cos函数的绝对值)
+        let zenithDist = Math.abs(Math.cos(angle)); 
+        
+        // 白天(6-18点)影子整体拉长，夜晚(18-6点)影子较短，使用sin函数平滑过渡这两个基础长度
+        let smoothDayFactor = (Math.sin(angle) + 1) / 2; // 0~1 的平滑系数
+        let baseLength = 30 + smoothDayFactor * 50; // 范围平滑演变：30(夜晚) 到 80(白天)
+        
+        // 最终丝滑长度计算
+        let length = Math.pow(zenithDist, 1.5) * baseLength + 5;
+
+        return {
+            dx: -Math.cos(angle) * length,
+            dy: -Math.sin(angle) * length * 0.3 // Y轴稍微压扁形成立体俯视感
+        };
     }
 
     function getShadowColor() {
@@ -347,7 +364,7 @@
             } else if (this.state === 'wobbling') {
                 if (!this.hasSplashed) {
                     createSplash(this.tx, this.ty, this.size, 1);
-                    this.hasSplashed = true; // 去除音效，仅保留水花效果
+                    this.hasSplashed = true; 
                 }
                 this.wobbleTime += 0.15;
                 if (this.wobbleTime > Math.PI * 4) this.state = 'settled';
@@ -464,7 +481,7 @@
 
     /** --- 场景初始化 --- */
     function initStaticEnvironment() {
-        stars = []; clouds =[]; underWaterPatches = []; decorations = []; drops =[];
+        stars =[]; clouds =[]; underWaterPatches = []; decorations = []; drops =[];
         for(let i=0; i<120; i++) stars.push({ x: Math.random(), y: Math.random(), s: Math.random()*1.5+0.5, b: Math.random()*Math.PI*2 });
         for(let i=0; i<5; i++) {
             clouds.push({
@@ -523,7 +540,6 @@
 
     canvas.addEventListener('click', (e) => {
         const rect = canvas.getBoundingClientRect();
-        // 处理移动端触摸位置
         let clientX = e.clientX || (e.touches && e.touches[0].clientX);
         let clientY = e.clientY || (e.touches && e.touches[0].clientY);
         
@@ -531,7 +547,7 @@
             let s = stones[i];
             if (s.state === 'settled') {
                 let dx = (clientX - rect.left) - s.tx; let dy = (clientY - rect.top) - s.ty;
-                if (Math.sqrt(dx*dx + dy*dy) < s.size * 2.5) { // 稍微扩大移动端点击范围
+                if (Math.sqrt(dx*dx + dy*dy) < s.size * 2.5) { 
                     stones.splice(i, 1); createSplash(s.tx, s.ty, s.size); updateLogic(); break;
                 }
             }
@@ -550,19 +566,16 @@
         let clientX = e.touches ? e.touches[0].clientX : e.clientX;
         let clientY = e.touches ? e.touches[0].clientY : e.clientY;
         
-        // 计算角度 (-PI 到 PI)
         let angle = Math.atan2(clientY - cy, clientX - cx);
-        let deg = angle * (180 / Math.PI) + 90; // 将正上方(12点)映射为0度
+        let deg = angle * (180 / Math.PI) + 90; 
         if (deg < 0) deg += 360;
 
-        // 映射度数(0-360)到时间(0-24)
         timeOfDay = (deg / 360) * 24;
     }
 
     function updateDialVisual() {
         let deg = (timeOfDay / 24) * 360;
-        let radius = dialWrapper.offsetWidth / 2 - 12; // 减去小白点自身大小的一半和边距
-        // 将角度转回弧度算x, y
+        let radius = dialWrapper.offsetWidth / 2 - 12; 
         let rad = (deg - 90) * (Math.PI / 180); 
         let kx = Math.cos(rad) * radius + dialWrapper.offsetWidth / 2;
         let ky = Math.sin(rad) * radius + dialWrapper.offsetHeight / 2;
@@ -583,7 +596,7 @@
     window.addEventListener('touchend', () => { isDraggingTime = false; });
 
 
-    // --- 音乐开关 ---
+    // --- 音乐开关优化：自动跳过前奏静音 ---
     const audio = document.getElementById('bgm');
     let isPlaying = false;
     function toggleAudio() {
@@ -592,6 +605,10 @@
             document.getElementById('icon-vol').style.display = 'none';
             document.getElementById('icon-mute').style.display = 'block';
         } else {
+            // 如果是在开头播放，自动跳过原曲前 2.5 秒的空白静音段
+            if (audio.currentTime < 2.5) {
+                audio.currentTime = 2.5;
+            }
             audio.volume = 0; audio.play();
             let vol = 0;
             let fade = setInterval(() => {
@@ -607,7 +624,7 @@
     document.getElementById('play-overlay').addEventListener('click', function() {
         this.style.opacity = '0';
         setTimeout(() => this.style.display = 'none', 500);
-        resize(); // 初始化屏幕
+        resize(); 
         toggleAudio(); 
         updateLogic();
     });
@@ -626,7 +643,7 @@
             timeOfDay += timeSpeed; if(timeOfDay >= 24) timeOfDay = 0;
         }
         globalFrames++;
-        updateDialVisual(); // 同步右上角轮盘位置与时间文字
+        updateDialVisual(); 
 
         // 纯后台平滑全自动随机天气
         weatherTimer++;
