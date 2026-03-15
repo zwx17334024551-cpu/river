@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>一条小河</title>
+    <title>听着一条静静的小河</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&family=Noto+Serif+SC:wght@500;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -121,26 +121,27 @@
 
         @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 
-        /* ======= 手机端极致压缩适配 ======= */
+        /* ======= 手机端极致排版防重叠适配 ======= */
         @media (max-width: 768px) {
-            /* 控制面板：整体极致缩小 */
+            /* 控制面板：整体极致精简与缩小 */
             #ui-panel { bottom: 15px; right: 12px; left: 12px; padding: 12px 15px; gap: 10px; border-radius: 15px; }
-            .control-group label { font-size: 11px; margin-bottom: -2px; }
-            .control-group input[type="range"] { width: 100%; height: 14px; }
+            .control-group label { font-size: 10px; margin-bottom: 0px; }
+            .control-group input[type="range"] { width: 100%; height: 12px; }
             .control-group input[type="range"]::-webkit-slider-thumb { height: 16px; width: 16px; margin-top: -6px; border-width: 2px;}
             .control-group input[type="range"]::-webkit-slider-runnable-track { height: 4px; }
             
             .btn-group { gap: 8px; }
-            button.action-btn { padding: 8px 10px; font-size: 12px; border-radius: 12px; }
+            button.action-btn { padding: 8px 10px; font-size: 11px; border-radius: 12px; }
             
-            /* 数据面板：精巧小网格，避开滑动条 */
+            /* 数据面板：精巧小网格，避开滑动条，确保不重叠 */
             #stats { 
-                bottom: 145px; left: 12px; right: 12px; 
+                bottom: 150px; /* 绝对安全的高度，拉开与控制面板的距离 */
+                left: 12px; right: 12px; 
                 flex-direction: row; flex-wrap: wrap; justify-content: space-between;
-                padding: 10px 15px; gap: 6px 0; border-radius: 12px;
+                padding: 10px 12px; gap: 4px 0; border-radius: 12px;
             }
-            #stats div { width: 48%; font-size: 11px; display: flex; justify-content: space-between; align-items: center; }
-            .stat-val { min-width: auto; font-size: 12px; }
+            #stats div { width: 48%; font-size: 10px; display: flex; justify-content: space-between; align-items: center; }
+            .stat-val { min-width: auto; font-size: 11px; }
             
             /* 顶部音量缩小 */
             #top-ui { top: 15px; left: 12px; }
@@ -159,8 +160,8 @@
 <body>
 
     <div id="play-overlay">
-        <h1>随物宛转流</h1>
-        <p>点击屏幕 · 聆听流水的声音</p>
+        <h1>随物宛流</h1>
+        <p>点击屏幕 · 聆听流水</p>
     </div>
 
     <!-- 背景音乐 -->
@@ -181,31 +182,41 @@
 
     <div id="toast">水流卷走了一切，内心重归宁静。</div>
 
+    <!-- UI精简词汇防止手机挤压 -->
     <div id="stats">
-        <div>河流宽度: <span class="stat-val" id="stat-width">35.0 m</span></div>
-        <div>水流深度: <span class="stat-val" id="stat-water">3.0 m</span></div>
-        <div>水流速度: <span class="stat-val" id="stat-flow">120.5 m³/s</span></div>
-        <div>沉底石子: <span class="stat-val" id="stat-stones">0</span></div>
+        <div>河宽: <span class="stat-val" id="stat-width">35.0 m</span></div>
+        <div>水深: <span class="stat-val" id="stat-water">3.0 m</span></div>
+        <div>水流量: <span class="stat-val" id="stat-flow">120.5 m³/s</span></div>
+        <div>石子数: <span class="stat-val" id="stat-stones">0</span></div>
     </div>
 
     <div id="ui-panel">
         <div class="control-group">
-            <label>河流宽度 River Width</label>
+            <label>河宽 RIVER WIDTH</label>
             <input type="range" id="widthSlider" min="0.3" max="0.85" step="0.01" value="0.7">
         </div>
         <div class="control-group">
-            <label>注入水量 Water Depth</label>
+            <label>水深 WATER DEPTH</label>
             <input type="range" id="waterSlider" min="0.1" max="1" step="0.01" value="0.6">
         </div>
         <div class="btn-group">
-            <button class="action-btn" id="btn-stone"> 丢入石子</button>
-            <button class="action-btn secondary" id="btn-clear"> 释放所有</button>
+            <button class="action-btn" id="btn-stone">✨ 丢入石子</button>
+            <button class="action-btn secondary" id="btn-clear">🌀 释放所有</button>
         </div>
     </div>
 
     <canvas id="canvas"></canvas>
 
 <script>
+    /** --- 唯美公开音效系统 --- */
+    const splashAudioURL = 'https://assets.mixkit.co/active_storage/sfx/2569/2569-preview.mp3';
+    
+    function playSplashSound() {
+        let sfx = new Audio(splashAudioURL);
+        sfx.volume = 0.35;
+        sfx.play().catch(e => console.log("等待交互许可"));
+    }
+
     /** --- 基础架构与变量 --- */
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
@@ -301,25 +312,17 @@
 
     function rgbToStr(arr, alpha=1) { return `rgba(${arr[0]}, ${arr[1]}, ${arr[2]}, ${alpha})`; }
 
-    /** --- 完美连续的丝滑光影系统重写 --- */
+    /** --- 极致物理丝滑光影系统 --- */
     function getShadowVector() {
-        // 利用太阳/月亮 24小时 360度公转，实现完美平滑过渡
-        // 6:00 (日出) 角度为0； 12:00 (正午) 角度为PI/2； 18:00 (日落) 角度为PI
-        let angle = ((timeOfDay - 6) / 24) * Math.PI * 2;
+        // 太阳从东到西，影子从西到东。以24小时为周期进行完美的圆周数学计算
+        let angle = Math.PI + ((timeOfDay - 6) / 24) * Math.PI * 2;
         
-        // 投影最长的时候在日出和日落，最短在正午和午夜 (利用cos函数的绝对值)
-        let zenithDist = Math.abs(Math.cos(angle)); 
-        
-        // 白天(6-18点)影子整体拉长，夜晚(18-6点)影子较短，使用sin函数平滑过渡这两个基础长度
-        let smoothDayFactor = (Math.sin(angle) + 1) / 2; // 0~1 的平滑系数
-        let baseLength = 30 + smoothDayFactor * 50; // 范围平滑演变：30(夜晚) 到 80(白天)
-        
-        // 最终丝滑长度计算
-        let length = Math.pow(zenithDist, 1.5) * baseLength + 5;
+        // 影子在早晚最长，在正午和午夜最短 (无缝衔接，不再有断层抽搐)
+        let length = 80 * Math.abs(Math.cos(angle)) + 5; 
 
         return {
-            dx: -Math.cos(angle) * length,
-            dy: -Math.sin(angle) * length * 0.3 // Y轴稍微压扁形成立体俯视感
+            dx: Math.cos(angle) * length,
+            dy: Math.sin(angle) * length * 0.4 // Y轴轻微压扁，制造透视
         };
     }
 
@@ -481,7 +484,7 @@
 
     /** --- 场景初始化 --- */
     function initStaticEnvironment() {
-        stars =[]; clouds =[]; underWaterPatches = []; decorations = []; drops =[];
+        stars =[]; clouds =[]; underWaterPatches = []; decorations =[]; drops =[];
         for(let i=0; i<120; i++) stars.push({ x: Math.random(), y: Math.random(), s: Math.random()*1.5+0.5, b: Math.random()*Math.PI*2 });
         for(let i=0; i<5; i++) {
             clouds.push({
@@ -596,7 +599,7 @@
     window.addEventListener('touchend', () => { isDraggingTime = false; });
 
 
-    // --- 音乐开关优化：自动跳过前奏静音 ---
+    // --- 音乐开关优化：自动跳过前奏空白提升出现速度 ---
     const audio = document.getElementById('bgm');
     let isPlaying = false;
     function toggleAudio() {
@@ -605,9 +608,9 @@
             document.getElementById('icon-vol').style.display = 'none';
             document.getElementById('icon-mute').style.display = 'block';
         } else {
-            // 如果是在开头播放，自动跳过原曲前 2.5 秒的空白静音段
-            if (audio.currentTime < 2.5) {
-                audio.currentTime = 2.5;
+            // 加大跳过力度，保证立刻出声
+            if (audio.currentTime < 3.0) {
+                audio.currentTime = 3.0;
             }
             audio.volume = 0; audio.play();
             let vol = 0;
@@ -667,24 +670,40 @@
 
         // 2. 湿润平滑退水沙滩 (极度清透的微蓝湿润感，盖掉噪点)
         if (minMarginRecord < margin) {
-            let wetColor = lerpColor(env.sand, env.waterBase, 0.08); // 混合一点点水色
+            let wetColor = lerpColor(env.sand, env.waterBase, 0.08); 
             ctx.fillStyle = rgbToStr(wetColor, 0.9);
-            ctx.beginPath(); ctx.moveTo(0, getCurveY(0, minMarginRecord, false));
+            
+            // 修复边缘闭合逻辑，彻底解决屏幕左右两端的断层
+            ctx.beginPath(); 
+            ctx.moveTo(0, getCurveY(0, minMarginRecord, false));
             for(let x=0; x<=width; x+=50) ctx.lineTo(x, getCurveY(x, minMarginRecord, false));
-            for(let x=width; x>=0; x-=50) ctx.lineTo(x, getCurveY(x, margin, false)); ctx.fill();
-            ctx.beginPath(); ctx.moveTo(0, getCurveY(0, minMarginRecord, true));
+            ctx.lineTo(width, getCurveY(width, minMarginRecord, false)); // 补全右边缘缺口
+            ctx.lineTo(width, getCurveY(width, margin, false));
+            for(let x=width; x>=0; x-=50) ctx.lineTo(x, getCurveY(x, margin, false));
+            ctx.lineTo(0, getCurveY(0, margin, false)); // 补全左边缘缺口
+            ctx.fill();
+            
+            ctx.beginPath(); 
+            ctx.moveTo(0, getCurveY(0, minMarginRecord, true));
             for(let x=0; x<=width; x+=50) ctx.lineTo(x, getCurveY(x, minMarginRecord, true));
-            for(let x=width; x>=0; x-=50) ctx.lineTo(x, getCurveY(x, margin, true)); ctx.fill();
+            ctx.lineTo(width, getCurveY(width, minMarginRecord, true)); // 补全右边缘缺口
+            ctx.lineTo(width, getCurveY(width, margin, true));
+            for(let x=width; x>=0; x-=50) ctx.lineTo(x, getCurveY(x, margin, true));
+            ctx.lineTo(0, getCurveY(0, margin, true)); // 补全左边缘缺口
+            ctx.fill();
         }
 
-        // 3. 河流主区域绘制
+        // 3. 河流主区域绘制 (修复边缘断层)
         let riverPath = new Path2D();
         riverPath.moveTo(0, getCurveY(0, margin, false));
         for(let x=0; x<=width; x+=50) riverPath.lineTo(x, getCurveY(x, margin, false));
+        riverPath.lineTo(width, getCurveY(width, margin, false)); // 补全右边缘
+        riverPath.lineTo(width, getCurveY(width, margin, true));  // 顺延到底部边缘
         for(let x=width; x>=0; x-=50) riverPath.lineTo(x, getCurveY(x, margin, true));
+        riverPath.lineTo(0, getCurveY(0, margin, true)); // 补全左边缘
         riverPath.closePath();
 
-        ctx.save(); ctx.clip(riverPath);
+        ctx.save(); ctx.clip(riverPath); // 完美的边缘遮罩
         
         // 梦幻水底透视斑块
         underWaterPatches.forEach(p => {
@@ -695,12 +714,12 @@
         
         // 更具透亮感的渐变水面
         let gradient = ctx.createLinearGradient(0, margin, 0, height - margin);
-        gradient.addColorStop(0, rgbToStr(env.waterBase, 0.65)); // 降低不透明度，显得透亮
+        gradient.addColorStop(0, rgbToStr(env.waterBase, 0.65)); 
         gradient.addColorStop(0.5, rgbToStr(lerpColor(env.waterBase, env.waterDeep, waterLevel), 0.85));
         gradient.addColorStop(1, rgbToStr(env.waterBase, 0.65));
         ctx.fillStyle = gradient; ctx.fill(riverPath);
 
-        // 动态波纹
+        // 动态波纹 (修复直线断层：彻底解除生硬的像素压平机制，让波纹自由延伸并由clip自然切断)
         let layers =[
             { count: 3+turbulence*8, amp: 20+turbulence*40, speed: 0.02+turbulence*0.06, width: 3+turbulence*3, color: `rgba(0,100,150,${0.1+turbulence*0.2})` },
             { count: 4+turbulence*12, amp: 15+turbulence*30, speed: 0.03+turbulence*0.08, width: 2+turbulence*2, color: `rgba(255,255,255,${0.15+turbulence*0.25})` },
@@ -712,10 +731,10 @@
             for (let i = 0; i < layer.count; i++) {
                 ctx.beginPath();
                 let yBase = margin + (height - margin*2) * ((i + 1) / (layer.count + 1));
-                for (let x = -50; x < width + 50; x += 40) {
+                for (let x = -50; x <= width + 50; x += 40) { // 延伸超出屏幕
                     let toff = globalFrames * layer.speed;
                     let y = yBase + Math.sin(x*0.01+toff+i+lIdx)*layer.amp + Math.cos(x*0.02-toff*0.8+i)*layer.amp*0.5;
-                    y = Math.max(getCurveY(x, margin, false)+10, Math.min(getCurveY(x, margin, true)-10, y)); 
+                    // 旧的错误压平逻辑已被移除，依靠上方的 riverPath clip 遮罩实现唯美边缘
                     if (x === -50) ctx.moveTo(x, y); else ctx.lineTo(x, y);
                 }
                 ctx.stroke();
@@ -737,7 +756,7 @@
             });
         }
 
-        // 5. 元素绘制 (太阳伞、石子、水花)
+        // 5. 元素绘制 
         decorations.forEach(d => d.draw(ctx, shadowVec, shadowCol));
 
         stones.forEach(s => s.update());
@@ -751,7 +770,7 @@
             if (r.alpha <= 0) ripples.splice(i, 1);
         }
 
-        // 6. 极高空云层 (距离拉长)
+        // 6. 极高空云层
         for (let i = clouds.length - 1; i >= 0; i--) {
             let c = clouds[i]; c.x += c.speed;
             ctx.save(); ctx.translate(c.x, c.y); ctx.scale(c.scale, c.scale);
