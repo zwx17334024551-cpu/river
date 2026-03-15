@@ -121,12 +121,31 @@
 
         @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 
+        /* ======= 手机端深度适配 ======= */
         @media (max-width: 768px) {
-            #ui-panel { bottom: 20px; right: 20px; left: 20px; padding: 15px; }
+            /* 控制面板自适应拉宽，减小间距 */
+            #ui-panel { bottom: 20px; right: 15px; left: 15px; padding: 15px; gap: 12px; }
             .control-group input[type="range"] { width: 100%; }
-            #stats { bottom: 180px; left: 20px; }
-            #time-dial-wrapper { top: 20px; right: 20px; width: 70px; height: 70px; }
-            #time-dial-text { font-size: 11px; }
+            
+            /* 数据面板变身 2x2 紧凑网格，完美避开重叠 */
+            #stats { 
+                bottom: 185px; left: 15px; right: 15px; 
+                flex-direction: row; flex-wrap: wrap; justify-content: space-between;
+                padding: 12px 15px; gap: 8px 0;
+            }
+            #stats div { width: 48%; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+            .stat-val { min-width: auto; }
+            
+            /* 顶部元素缩小 */
+            #top-ui { top: 20px; left: 15px; }
+            .top-btn { width: 40px; height: 40px; }
+            
+            /* 时间轮盘缩小并微调 */
+            #time-dial-wrapper { top: 20px; right: 15px; width: 65px; height: 65px; }
+            #time-dial-knob { width: 12px; height: 12px; top: 4px; }
+            #time-dial-text { font-size: 11px; margin-top: 3px; }
+            
+            #toast { font-size: 14px; white-space: normal; width: 85%; padding: 12px 20px; top: 100px; }
         }
     </style>
 </head>
@@ -134,7 +153,7 @@
 
     <div id="play-overlay">
         <h1>夏日梦幻之境</h1>
-        <p>点击屏幕 · 聆听流水与落石</p>
+        <p>点击屏幕 · 聆听流水</p>
     </div>
 
     <!-- 背景音乐 -->
@@ -158,8 +177,8 @@
     <div id="stats">
         <div>河流宽度: <span class="stat-val" id="stat-width">35.0 m</span></div>
         <div>水流深度: <span class="stat-val" id="stat-water">3.0 m</span></div>
-        <div>实际水流量: <span class="stat-val" id="stat-flow">120.5 m³/s</span></div>
-        <div>沉底石子数: <span class="stat-val" id="stat-stones">0</span></div>
+        <div>水流速度: <span class="stat-val" id="stat-flow">120.5 m³/s</span></div>
+        <div>沉底石子: <span class="stat-val" id="stat-stones">0</span></div>
     </div>
 
     <div id="ui-panel">
@@ -180,17 +199,6 @@
     <canvas id="canvas"></canvas>
 
 <script>
-    /** --- 唯美公开音效系统 --- */
-    // 使用Mixkit稳定公开的高品质柔和滴水音效
-    const splashAudioURL = 'https://assets.mixkit.co/active_storage/sfx/2569/2569-preview.mp3';
-    
-    function playSplashSound() {
-        // 每次发声都创建一个新的轻量级 Audio 实例，确保可以快速连续播放
-        let sfx = new Audio(splashAudioURL);
-        sfx.volume = 0.35; // 唯美轻柔的音量
-        sfx.play().catch(e => console.log("等待交互许可"));
-    }
-
     /** --- 基础架构与变量 --- */
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
@@ -205,7 +213,7 @@
     // 实体数组
     let stones =[];
     let clouds =[];
-    let ripples = [];
+    let ripples =[];
     let stars = [];
     let drops =[];
     let underWaterPatches =[];
@@ -254,7 +262,6 @@
     window.addEventListener('resize', resize);
 
     /** --- 极致梦幻唯美色彩系统 --- */
-    // 调高饱和度，偏向粉紫、马尔代夫蓝的仙境色调
     const colorStops =[
         { t: 0,  c: { sand:[18, 16, 40], waterBase:[0, 191, 255], waterDeep:[25, 25, 112], cloud:[60, 50, 90] } }, // 午夜仙踪
         { t: 5,  c: { sand:[230, 200, 240], waterBase:[255, 182, 193], waterDeep:[138, 43, 226], cloud:[255, 200, 255] } }, // 魔法黎明
@@ -267,7 +274,7 @@
     ];
 
     function lerpColor(c1, c2, ratio) {
-        return [ c1[0] + (c2[0] - c1[0]) * ratio, c1[1] + (c2[1] - c1[1]) * ratio, c1[2] + (c2[2] - c1[2]) * ratio ];
+        return[ c1[0] + (c2[0] - c1[0]) * ratio, c1[1] + (c2[1] - c1[1]) * ratio, c1[2] + (c2[2] - c1[2]) * ratio ];
     }
 
     function getEnvColors() {
@@ -340,8 +347,7 @@
             } else if (this.state === 'wobbling') {
                 if (!this.hasSplashed) {
                     createSplash(this.tx, this.ty, this.size, 1);
-                    playSplashSound(); // 触发网络空灵音效
-                    this.hasSplashed = true;
+                    this.hasSplashed = true; // 去除音效，仅保留水花效果
                 }
                 this.wobbleTime += 0.15;
                 if (this.wobbleTime > Math.PI * 4) this.state = 'settled';
@@ -517,11 +523,15 @@
 
     canvas.addEventListener('click', (e) => {
         const rect = canvas.getBoundingClientRect();
+        // 处理移动端触摸位置
+        let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        
         for (let i = stones.length - 1; i >= 0; i--) {
             let s = stones[i];
             if (s.state === 'settled') {
-                let dx = (e.clientX - rect.left) - s.tx; let dy = (e.clientY - rect.top) - s.ty;
-                if (Math.sqrt(dx*dx + dy*dy) < s.size * 2) {
+                let dx = (clientX - rect.left) - s.tx; let dy = (clientY - rect.top) - s.ty;
+                if (Math.sqrt(dx*dx + dy*dy) < s.size * 2.5) { // 稍微扩大移动端点击范围
                     stones.splice(i, 1); createSplash(s.tx, s.ty, s.size); updateLogic(); break;
                 }
             }
@@ -631,7 +641,7 @@
         let shadowCol = getShadowColor();
         let margin = (1 - riverWidthRatio) * (height / 2);
 
-        // 干燥物理：大幅度加快消失速度 (原来0.05, 现在改为0.35)
+        // 干燥物理：大幅度加快消失速度
         if (minMarginRecord < margin) minMarginRecord += 0.35; 
 
         // 1. 基础干沙滩 (带颗粒噪点)
