@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>夏日治愈河流 - 梦幻绚烂版</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&family=Noto+Serif+SC:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { 
+            width: 100%; height: 100%; overflow: hidden; 
+            background-color: #1a2035; 
+            font-family: 'Nunito', 'Noto Serif SC', sans-serif;
+            user-select: none; -webkit-user-select: none;
+        }
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* UI 控制面板 */
+        #ui-panel {
+            position: absolute; bottom: 30px; right: 30px;
+            background: rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            padding: 20px 25px; border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 160, 255, 0.15), inset 0 0 0 1px rgba(255,255,255,0.7);
+            color: #1e3a8a; display: flex; flex-direction: column; gap: 18px;
+            z-index: 10; transition: all 0.4s ease;
+        }
+
+        .control-group { display: flex; flex-direction: column; gap: 8px; }
+        .control-group label { font-size: 13px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
+        .control-group input[type="range"] { -webkit-appearance: none; width: 220px; background: transparent; height: 18px; }
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%;
+            background: #fff; border: 3px solid #0ea5e9; cursor: pointer; margin-top: -7px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: transform 0.1s;
+        }
+        .control-group input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+        .control-group input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%; height: 6px; cursor: pointer; background: rgba(255,255,255,0.9); 
+            border-radius: 3px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .btn-group { display: flex; gap: 10px; }
+        button.action-btn {
+            flex: 1; background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+            border: none; padding: 12px 15px; border-radius: 15px;
+            color: #fff; font-weight: 800; font-size: 14px; cursor: pointer;
+            box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
+            transition: all 0.2s ease; text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            font-family: inherit;
+        }
+        button.action-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(14, 165, 233, 0.5); }
+        button.action-btn:active { transform: translateY(1px) scale(0.97); }
+        button.action-btn.secondary { background: linear-gradient(135deg, #fbcfe8 0%, #f43f5e 100%); box-shadow: 0 6px 20px rgba(244, 63, 94, 0.3); }
+
+        /* 左侧精确数据看板 */
+        #stats {
+            position: absolute; left: 30px; bottom: 30px;
+            color: #1e3a8a; font-size: 15px; font-weight: 600; pointer-events: none; z-index: 10;
+            background: rgba(255,255,255,0.35); backdrop-filter: blur(20px);
+            padding: 15px 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.7);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 6px;
+        }
+        .stat-val { font-weight: 800; color: #0284c7; display: inline-block; min-width: 60px; text-align: right; }
+
+        /* 顶部 UI 左侧音乐 */
+        #top-ui {
+            position: absolute; top: 30px; left: 30px;
+            display: flex; gap: 15px; z-index: 10; pointer-events: none;
+        }
+        .top-btn {
+            width: 45px; height: 45px; border-radius: 50%; pointer-events: auto;
+            background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px);
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; border: 1px solid rgba(255,255,255,0.9);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.08); transition: transform 0.2s;
+        }
+        .top-btn:hover { transform: scale(1.1); }
+        .top-btn svg { width: 22px; height: 22px; fill: #0284c7; }
+
+        /* 右上角时间轮盘 */
+        #time-dial-wrapper {
+            position: absolute; top: 30px; right: 30px;
+            width: 90px; height: 90px;
+            background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border-radius: 50%; border: 2px solid rgba(255,255,255,0.8);
+            cursor: pointer; box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+            z-index: 10; display: flex; justify-content: center; align-items: center;
+        }
+        #time-dial-knob {
+            position: absolute; top: 5px; left: 50%; transform: translateX(-50%);
+            width: 16px; height: 16px; background: #fff; border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: background 0.3s;
+            pointer-events: none;
+        }
+        #time-dial-text {
+            font-size: 14px; font-weight: 800; color: #1e3a8a; pointer-events: none;
+        }
+
+        /* 情绪弹窗 */
+        #toast {
+            position: absolute; top: 120px; left: 50%; transform: translateX(-50%) translateY(-20px);
+            background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px);
+            padding: 15px 30px; border-radius: 30px; color: #0f172a;
+            font-family: 'Noto Serif SC', serif; font-size: 16px; font-weight: 700;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.9);
+            opacity: 0; pointer-events: none; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 20; text-align: center; white-space: nowrap;
+        }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* 开始遮罩 */
+        #play-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(240, 248, 255, 0.9); backdrop-filter: blur(10px); z-index: 100;
+            display: flex; justify-content: center; align-items: center;
+            flex-direction: column; cursor: pointer; color: #0284c7; transition: opacity 0.5s;
+        }
+        #play-overlay h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 15px; }
+        #play-overlay p { font-size: 1.1rem; font-weight: 600; opacity: 0.8; animation: pulse 2s infinite; }
+
+        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+        @media (max-width: 768px) {
+            #ui-panel { bottom: 20px; right: 20px; left: 20px; padding: 15px; }
+            .control-group input[type="range"] { width: 100%; }
+            #stats { bottom: 180px; left: 20px; }
+            #time-dial-wrapper { top: 20px; right: 20px; width: 70px; height: 70px; }
+            #time-dial-text { font-size: 11px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="play-overlay">
+        <h1>夏日梦幻之境</h1>
+        <p>点击屏幕 · 聆听流水与落石</p>
+    </div>
+
+    <!-- 背景音乐 -->
+    <audio id="bgm" loop><source src="1.mp3" type="audio/mpeg"></audio>
+
+    <div id="top-ui">
+        <div class="top-btn" id="audio-control" onclick="toggleAudio()">
+            <svg id="icon-vol" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+            <svg id="icon-mute" viewBox="0 0 24 24" style="display:none;"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+        </div>
+    </div>
+
+    <!-- 右上角时间轮盘 -->
+    <div id="time-dial-wrapper" title="拖拽调整时间">
+        <div id="time-dial-knob"></div>
+        <div id="time-dial-text">08:00</div>
+    </div>
+
+    <div id="toast">水流卷走了一切，内心重归宁静。</div>
+
+    <div id="stats">
+        <div>河流宽度: <span class="stat-val" id="stat-width">35.0 m</span></div>
+        <div>水流深度: <span class="stat-val" id="stat-water">3.0 m</span></div>
+        <div>实际水流量: <span class="stat-val" id="stat-flow">120.5 m³/s</span></div>
+        <div>沉底石子数: <span class="stat-val" id="stat-stones">0</span></div>
+    </div>
+
+    <div id="ui-panel">
+        <div class="control-group">
+            <label>河流宽度 River Width</label>
+            <input type="range" id="widthSlider" min="0.3" max="0.85" step="0.01" value="0.7">
+        </div>
+        <div class="control-group">
+            <label>注入水量 Water Depth</label>
+            <input type="range" id="waterSlider" min="0.1" max="1" step="0.01" value="0.6">
+        </div>
+        <div class="btn-group">
+            <button class="action-btn" id="btn-stone">✨ 丢入石子</button>
+            <button class="action-btn secondary" id="btn-clear">🌀 释放所有</button>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+<script>
+    /** --- 唯美公开音效系统 --- */
+    // 使用Mixkit稳定公开的高品质柔和滴水音效
+    const splashAudioURL = 'https://assets.mixkit.co/active_storage/sfx/2569/2569-preview.mp3';
+    
+    function playSplashSound() {
+        // 每次发声都创建一个新的轻量级 Audio 实例，确保可以快速连续播放
+        let sfx = new Audio(splashAudioURL);
+        sfx.volume = 0.35; // 唯美轻柔的音量
+        sfx.play().catch(e => console.log("等待交互许可"));
+    }
+
+    /** --- 基础架构与变量 --- */
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+
+    // 核心状态
+    let riverWidthRatio = 0.7;
+    let waterLevel = 0.6;
+    let turbulence = 0.5;
+    let minMarginRecord = 0;
+
+    // 实体数组
+    let stones =[];
+    let clouds =[];
+    let ripples = [];
+    let stars = [];
+    let drops =[];
+    let underWaterPatches =[];
+    let decorations =[];
+    
+    // 沙子纹理
+    let noisePattern = null;
+
+    // 时间与随机平滑天气系统
+    let timeOfDay = 8;
+    let timeSpeed = 0.0015;
+    let isDraggingTime = false;
+    let globalFrames = 0;
+    
+    let curWeatherOp = 0; // 0=晴天, 1=雨天
+    let weatherTimer = 0;
+    let targetWeatherOp = 0;
+
+    const stoneColors =['#FDE68A', '#FECACA', '#A7F3D0', '#BFDBFE', '#E9D5FF', '#FFFFFF', '#FBCFE8'];
+    const umbrellaColors =['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+
+    function createSandTexture() {
+        let nCanvas = document.createElement('canvas');
+        nCanvas.width = 150; nCanvas.height = 150;
+        let nCtx = nCanvas.getContext('2d');
+        for(let x=0; x<150; x+=2) {
+            for(let y=0; y<150; y+=2) {
+                if(Math.random() > 0.5) {
+                    nCtx.fillStyle = `rgba(0,0,0,${Math.random()*0.02})`;
+                } else {
+                    nCtx.fillStyle = `rgba(255,255,255,${Math.random()*0.02})`;
+                }
+                nCtx.fillRect(x,y,2,2);
+            }
+        }
+        noisePattern = ctx.createPattern(nCanvas, 'repeat');
+    }
+
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+        minMarginRecord = height; 
+        createSandTexture();
+        initStaticEnvironment();
+    }
+    window.addEventListener('resize', resize);
+
+    /** --- 极致梦幻唯美色彩系统 --- */
+    // 调高饱和度，偏向粉紫、马尔代夫蓝的仙境色调
+    const colorStops =[
+        { t: 0,  c: { sand:[18, 16, 40], waterBase:[0, 191, 255], waterDeep:[25, 25, 112], cloud:[60, 50, 90] } }, // 午夜仙踪
+        { t: 5,  c: { sand:[230, 200, 240], waterBase:[255, 182, 193], waterDeep:[138, 43, 226], cloud:[255, 200, 255] } }, // 魔法黎明
+        { t: 7,  c: { sand:[255, 248, 220], waterBase:[0, 255, 255], waterDeep:[0, 119, 190], cloud:[255, 250, 250] } }, // 清晨高光
+        { t: 12, c: { sand:[255, 250, 240], waterBase:[64, 224, 208], waterDeep:[0, 191, 255], cloud:[255, 255, 255] } }, // 马尔代夫正午
+        { t: 16, c: { sand:[255, 235, 205], waterBase:[135, 206, 235], waterDeep:[30, 144, 255], cloud:[255, 250, 245] } }, // 蔚蓝午后
+        { t: 18.5, c:{ sand:[255, 218, 185], waterBase:[255, 127, 80], waterDeep:[255, 20, 147], cloud:[255, 180, 200] } }, // 绝美火烧云
+        { t: 20, c: { sand:[75, 0, 130], waterBase:[147, 112, 219], waterDeep:[72, 61, 139], cloud:[100, 80, 150] } }, // 紫罗兰薄暮
+        { t: 24, c: { sand:[18, 16, 40], waterBase:[0, 191, 255], waterDeep:[25, 25, 112], cloud:[60, 50, 90] } }
+    ];
+
+    function lerpColor(c1, c2, ratio) {
+        return [ c1[0] + (c2[0] - c1[0]) * ratio, c1[1] + (c2[1] - c1[1]) * ratio, c1[2] + (c2[2] - c1[2]) * ratio ];
+    }
+
+    function getEnvColors() {
+        let s1, s2;
+        for (let i = 0; i < colorStops.length - 1; i++) {
+            if (timeOfDay >= colorStops[i].t && timeOfDay <= colorStops[i+1].t) { s1 = colorStops[i]; s2 = colorStops[i+1]; break; }
+        }
+        let ratio = (timeOfDay - s1.t) / (s2.t - s1.t);
+        ratio = ratio * ratio * (3 - 2 * ratio); 
+        return {
+            sand: lerpColor(s1.c.sand, s2.c.sand, ratio),
+            waterBase: lerpColor(s1.c.waterBase, s2.c.waterBase, ratio),
+            waterDeep: lerpColor(s1.c.waterDeep, s2.c.waterDeep, ratio),
+            cloud: lerpColor(s1.c.cloud, s2.c.cloud, ratio)
+        };
+    }
+
+    function rgbToStr(arr, alpha=1) { return `rgba(${arr[0]}, ${arr[1]}, ${arr[2]}, ${alpha})`; }
+
+    function getShadowVector() {
+        let angle, length;
+        if (timeOfDay >= 6 && timeOfDay <= 18) {
+            let sunProgress = (timeOfDay - 6) / 12;
+            angle = sunProgress * Math.PI; 
+            length = Math.abs(sunProgress - 0.5) * 100 + 10; 
+        } else {
+            angle = (timeOfDay / 24) * Math.PI; length = 20; 
+        }
+        return { dx: -Math.cos(angle) * length, dy: Math.sin(angle) * length * 0.3 };
+    }
+
+    function getShadowColor() {
+        if (timeOfDay > 6 && timeOfDay < 17) return 'rgba(15, 30, 60, 0.1)';
+        if (timeOfDay >= 17 && timeOfDay <= 19) return 'rgba(80, 20, 40, 0.15)';
+        return 'rgba(5, 10, 20, 0.3)';
+    }
+
+    /** --- 实体与渲染类 --- */
+
+    class Stone {
+        constructor() {
+            let edge = Math.floor(Math.random() * 4);
+            if (edge === 0) { this.sx = Math.random()*width; this.sy = -100; } 
+            else if (edge === 1) { this.sx = Math.random()*width; this.sy = height+100; } 
+            else if (edge === 2) { this.sx = -100; this.sy = Math.random()*height; } 
+            else { this.sx = width+100; this.sy = Math.random()*height; } 
+
+            let margin = (1 - riverWidthRatio) * (height / 2);
+            this.tx = width * 0.1 + Math.random() * (width * 0.8);
+            this.ty = margin + 30 + Math.random() * (height - margin*2 - 60);
+
+            this.size = Math.random() * 6 + 6;
+            this.color = stoneColors[Math.floor(Math.random() * stoneColors.length)];
+            
+            this.progress = 0; 
+            this.state = 'flying'; 
+            this.z = 0; 
+            this.wobbleTime = 0;
+            this.rotation = Math.random() * Math.PI;
+            this.hasSplashed = false;
+        }
+
+        update() {
+            if (this.state === 'flying') {
+                this.progress += 0.025; 
+                if (this.progress >= 1) {
+                    this.progress = 1; this.state = 'wobbling';
+                }
+                this.z = 4 * 200 * this.progress * (1 - this.progress); 
+            } else if (this.state === 'wobbling') {
+                if (!this.hasSplashed) {
+                    createSplash(this.tx, this.ty, this.size, 1);
+                    playSplashSound(); // 触发网络空灵音效
+                    this.hasSplashed = true;
+                }
+                this.wobbleTime += 0.15;
+                if (this.wobbleTime > Math.PI * 4) this.state = 'settled';
+            }
+        }
+
+        draw(ctx, shadowVec, shadowColor, waterDepth) {
+            let curX = this.state === 'flying' ? this.sx + (this.tx - this.sx) * this.progress : this.tx;
+            let curY = this.state === 'flying' ? this.sy + (this.ty - this.sy) * this.progress : this.ty;
+            let scaleX = 1, scaleY = 1;
+
+            if (this.state === 'wobbling') {
+                let damp = Math.exp(-this.wobbleTime * 0.4);
+                scaleX = 1 + Math.sin(this.wobbleTime * 2) * 0.3 * damp;
+                scaleY = 1 - Math.sin(this.wobbleTime * 2) * 0.3 * damp;
+            }
+
+            let finalAlpha = this.state === 'settled' ? 1 - (waterDepth * 0.65) : 1;
+
+            ctx.save();
+            ctx.translate(curX, curY);
+            
+            if (this.state === 'flying') {
+                ctx.save();
+                ctx.translate(-curX + this.tx + shadowVec.dx, -curY + this.ty + shadowVec.dy);
+                ctx.fillStyle = shadowColor;
+                let shadowScale = 1 - (this.z / 300);
+                if (shadowScale > 0) {
+                    ctx.beginPath(); ctx.ellipse(0, 0, this.size*shadowScale, this.size*0.6*shadowScale, 0, 0, Math.PI*2); ctx.fill();
+                }
+                ctx.restore();
+            } else {
+                ctx.fillStyle = `rgba(0,0,0,${finalAlpha * 0.25})`;
+                ctx.beginPath();
+                ctx.ellipse(shadowVec.dx*0.2, shadowVec.dy*0.2, this.size, this.size*0.7, this.rotation, 0, Math.PI*2);
+                ctx.fill();
+            }
+
+            ctx.translate(0, -this.z);
+            ctx.rotate(this.rotation); ctx.scale(scaleX, scaleY);
+            ctx.fillStyle = this.color; ctx.globalAlpha = finalAlpha;
+            ctx.beginPath(); ctx.ellipse(0, 0, this.size, this.size*0.8, 0, 0, Math.PI*2); ctx.fill();
+            
+            ctx.fillStyle = `rgba(255, 255, 255, ${finalAlpha * 0.8})`;
+            ctx.beginPath(); ctx.ellipse(-this.size*0.2, -this.size*0.3, this.size*0.3, this.size*0.15, -0.2, 0, Math.PI*2); ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    class RainDrop {
+        constructor() {
+            this.x = Math.random() * width; this.y = -10;
+            this.length = Math.random() * 15 + 10;
+            this.speed = Math.random() * 10 + 15;
+            this.targetY = Math.random() * height;
+            this.wind = 2; 
+        }
+        update() {
+            this.x += this.wind; this.y += this.speed;
+            if (this.y > this.targetY) {
+                if (Math.random() < 0.2) createSplash(this.x, this.y, 1, 0.2);
+                this.y = -10; this.x = Math.random() * width; this.targetY = Math.random() * height;
+            }
+        }
+        draw(ctx, opacity) {
+            ctx.strokeStyle = `rgba(255,255,255,${opacity})`; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x - this.wind, this.y - this.length); ctx.stroke();
+        }
+    }
+
+    class BeachDecoration {
+        constructor(isTop) {
+            this.isTop = isTop;
+            this.x = width * 0.1 + Math.random() * width * 0.8;
+            let extremeMargin = (1 - 0.85) * (height / 2); 
+            this.y = isTop ? extremeMargin * Math.random() : height - extremeMargin * Math.random();
+            this.type = Math.random() > 0.4 ? 'umbrella' : 'towel';
+            this.scale = Math.random() * 0.3 + 0.8;
+            this.color = umbrellaColors[Math.floor(Math.random() * umbrellaColors.length)];
+            this.rotation = Math.random() * Math.PI;
+        }
+        draw(ctx, shadowVec, shadowColor) {
+            ctx.save(); ctx.translate(this.x, this.y); ctx.scale(this.scale, this.scale); ctx.rotate(this.rotation);
+            
+            ctx.save();
+            ctx.translate(shadowVec.dx, shadowVec.dy);
+            ctx.fillStyle = shadowColor;
+            ctx.beginPath();
+            if (this.type === 'umbrella') { ctx.arc(0, 0, 22, 0, Math.PI*2); }
+            else if (this.type === 'towel') { ctx.roundRect(-15, -25, 30, 50, 5); }
+            ctx.fill();
+            ctx.restore();
+
+            if (this.type === 'umbrella') {
+                let colors =['#ffffff', this.color];
+                for(let i=0; i<8; i++) {
+                    ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,22, i*Math.PI/4, (i+1)*Math.PI/4);
+                    ctx.fillStyle = colors[i%2]; ctx.fill();
+                }
+                ctx.fillStyle = '#fefefe'; ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.fill();
+            } else if (this.type === 'towel') {
+                ctx.fillStyle = this.color;
+                ctx.roundRect(-15, -25, 30, 50, 5); ctx.fill();
+                ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                ctx.fillRect(-15, -20, 30, 5); ctx.fillRect(-15, 15, 30, 5); 
+            }
+            ctx.restore();
+        }
+    }
+
+    function createSplash(x, y, size, initialAlpha=1) {
+        ripples.push({ x, y, radius: size, alpha: initialAlpha, speed: 1.5 });
+    }
+
+    /** --- 场景初始化 --- */
+    function initStaticEnvironment() {
+        stars = []; clouds =[]; underWaterPatches = []; decorations = []; drops =[];
+        for(let i=0; i<120; i++) stars.push({ x: Math.random(), y: Math.random(), s: Math.random()*1.5+0.5, b: Math.random()*Math.PI*2 });
+        for(let i=0; i<5; i++) {
+            clouds.push({
+                x: Math.random()*width, y: Math.random()*height, scale: Math.random()*0.6+0.4, speed: Math.random()*0.15+0.05,
+                altitude: Math.random() * 30 + 20, // 超高空投影
+                parts: Array.from({length: 4 + Math.floor(Math.random()*4)}, () => ({
+                    ox: (Math.random()-0.5)*100, oy: (Math.random()-0.5)*50, r: 20 + Math.random()*50
+                }))
+            });
+        }
+        for(let i=0; i<15; i++) {
+            underWaterPatches.push({ x: Math.random()*width, y: Math.random()*height, r: Math.random()*80 + 50, op: Math.random()*0.2 + 0.1 });
+        }
+        for(let i=0; i<8; i++) decorations.push(new BeachDecoration(i%2===0));
+        for(let i=0; i<150; i++) drops.push(new RainDrop());
+    }
+
+    /** --- 交互系统 --- */
+    
+    function updateLogic() {
+        riverWidthRatio = parseFloat(document.getElementById('widthSlider').value);
+        waterLevel = parseFloat(document.getElementById('waterSlider').value);
+        turbulence = (1 - riverWidthRatio) * 0.5 + (1.1 - waterLevel) * 0.5; 
+
+        let actualWidth = (riverWidthRatio * 50).toFixed(1); 
+        let actualDepth = (waterLevel * 5).toFixed(1);
+        let actualFlow = (riverWidthRatio * waterLevel * (1 + turbulence) * 150).toFixed(1);
+
+        document.getElementById('stat-width').innerText = `${actualWidth} m`;
+        document.getElementById('stat-water').innerText = `${actualDepth} m`;
+        document.getElementById('stat-flow').innerText = `${actualFlow} m³/s`;
+        document.getElementById('stat-stones').innerText = stones.filter(s=>s.state==='settled').length;
+
+        let curMargin = (1 - riverWidthRatio) * (height / 2);
+        if (curMargin < minMarginRecord) minMarginRecord = curMargin; 
+    }
+
+    document.getElementById('widthSlider').addEventListener('input', updateLogic);
+    document.getElementById('waterSlider').addEventListener('input', updateLogic);
+
+    document.getElementById('btn-stone').addEventListener('click', () => {
+        stones.push(new Stone());
+        updateLogic();
+    });
+
+    let toastTimeout;
+    document.getElementById('btn-clear').addEventListener('click', () => {
+        stones.forEach(s => { if(s.state === 'settled') createSplash(s.tx, s.ty, s.size * 2); });
+        stones =[];
+        updateLogic();
+        const toast = document.getElementById('toast');
+        toast.classList.add('show');
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => toast.classList.remove('show'), 3500);
+    });
+
+    canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        for (let i = stones.length - 1; i >= 0; i--) {
+            let s = stones[i];
+            if (s.state === 'settled') {
+                let dx = (e.clientX - rect.left) - s.tx; let dy = (e.clientY - rect.top) - s.ty;
+                if (Math.sqrt(dx*dx + dy*dy) < s.size * 2) {
+                    stones.splice(i, 1); createSplash(s.tx, s.ty, s.size); updateLogic(); break;
+                }
+            }
+        }
+    });
+
+    // --- 时间轮盘拖拽逻辑 ---
+    const dialWrapper = document.getElementById('time-dial-wrapper');
+    const dialKnob = document.getElementById('time-dial-knob');
+    const dialText = document.getElementById('time-dial-text');
+
+    function updateTimeFromEvent(e) {
+        let rect = dialWrapper.getBoundingClientRect();
+        let cx = rect.left + rect.width / 2;
+        let cy = rect.top + rect.height / 2;
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        
+        // 计算角度 (-PI 到 PI)
+        let angle = Math.atan2(clientY - cy, clientX - cx);
+        let deg = angle * (180 / Math.PI) + 90; // 将正上方(12点)映射为0度
+        if (deg < 0) deg += 360;
+
+        // 映射度数(0-360)到时间(0-24)
+        timeOfDay = (deg / 360) * 24;
+    }
+
+    function updateDialVisual() {
+        let deg = (timeOfDay / 24) * 360;
+        let radius = dialWrapper.offsetWidth / 2 - 12; // 减去小白点自身大小的一半和边距
+        // 将角度转回弧度算x, y
+        let rad = (deg - 90) * (Math.PI / 180); 
+        let kx = Math.cos(rad) * radius + dialWrapper.offsetWidth / 2;
+        let ky = Math.sin(rad) * radius + dialWrapper.offsetHeight / 2;
+        
+        dialKnob.style.left = `${kx}px`;
+        dialKnob.style.top = `${ky}px`;
+        dialKnob.style.transform = `translate(-50%, -50%)`;
+
+        let h = Math.floor(timeOfDay); let m = Math.floor((timeOfDay - h) * 60);
+        dialText.innerText = `${(h%12||12).toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
+    }
+
+    dialWrapper.addEventListener('mousedown', (e) => { isDraggingTime = true; updateTimeFromEvent(e); });
+    window.addEventListener('mousemove', (e) => { if(isDraggingTime) updateTimeFromEvent(e); });
+    window.addEventListener('mouseup', () => { isDraggingTime = false; });
+    dialWrapper.addEventListener('touchstart', (e) => { isDraggingTime = true; updateTimeFromEvent(e); }, {passive:false});
+    window.addEventListener('touchmove', (e) => { if(isDraggingTime) { e.preventDefault(); updateTimeFromEvent(e); } }, {passive:false});
+    window.addEventListener('touchend', () => { isDraggingTime = false; });
+
+
+    // --- 音乐开关 ---
+    const audio = document.getElementById('bgm');
+    let isPlaying = false;
+    function toggleAudio() {
+        if (isPlaying) {
+            audio.pause();
+            document.getElementById('icon-vol').style.display = 'none';
+            document.getElementById('icon-mute').style.display = 'block';
+        } else {
+            audio.volume = 0; audio.play();
+            let vol = 0;
+            let fade = setInterval(() => {
+                vol += 0.05;
+                if(vol >= 0.8) { audio.volume = 0.8; clearInterval(fade); } else audio.volume = vol;
+            }, 100);
+            document.getElementById('icon-vol').style.display = 'block';
+            document.getElementById('icon-mute').style.display = 'none';
+        }
+        isPlaying = !isPlaying;
+    }
+
+    document.getElementById('play-overlay').addEventListener('click', function() {
+        this.style.opacity = '0';
+        setTimeout(() => this.style.display = 'none', 500);
+        resize(); // 初始化屏幕
+        toggleAudio(); 
+        updateLogic();
+    });
+
+    /** --- 核心渲染循环 --- */
+    function getCurveY(x, margin, isBottom, offset=0) {
+        let wave = Math.sin(x * 0.005 + offset) * 15;
+        return isBottom ? height - margin + wave : margin + wave;
+    }
+
+    function render() {
+        ctx.clearRect(0, 0, width, height);
+
+        // 时间推进 (不拖拽时自动流逝)
+        if (!isDraggingTime) {
+            timeOfDay += timeSpeed; if(timeOfDay >= 24) timeOfDay = 0;
+        }
+        globalFrames++;
+        updateDialVisual(); // 同步右上角轮盘位置与时间文字
+
+        // 纯后台平滑全自动随机天气
+        weatherTimer++;
+        if(weatherTimer > 3000) { 
+            weatherTimer = 0;
+            if(Math.random() < 0.25) targetWeatherOp = Math.random() > 0.5 ? Math.random() * 0.8 : 0; 
+        }
+        curWeatherOp += (targetWeatherOp - curWeatherOp) * 0.002;
+
+        let env = getEnvColors();
+        let shadowVec = getShadowVector();
+        let shadowCol = getShadowColor();
+        let margin = (1 - riverWidthRatio) * (height / 2);
+
+        // 干燥物理：大幅度加快消失速度 (原来0.05, 现在改为0.35)
+        if (minMarginRecord < margin) minMarginRecord += 0.35; 
+
+        // 1. 基础干沙滩 (带颗粒噪点)
+        ctx.fillStyle = rgbToStr(env.sand); ctx.fillRect(0, 0, width, height);
+        if(noisePattern) { ctx.fillStyle = noisePattern; ctx.fillRect(0, 0, width, height); }
+
+        // 2. 湿润平滑退水沙滩 (极度清透的微蓝湿润感，盖掉噪点)
+        if (minMarginRecord < margin) {
+            let wetColor = lerpColor(env.sand, env.waterBase, 0.08); // 混合一点点水色
+            ctx.fillStyle = rgbToStr(wetColor, 0.9);
+            ctx.beginPath(); ctx.moveTo(0, getCurveY(0, minMarginRecord, false));
+            for(let x=0; x<=width; x+=50) ctx.lineTo(x, getCurveY(x, minMarginRecord, false));
+            for(let x=width; x>=0; x-=50) ctx.lineTo(x, getCurveY(x, margin, false)); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(0, getCurveY(0, minMarginRecord, true));
+            for(let x=0; x<=width; x+=50) ctx.lineTo(x, getCurveY(x, minMarginRecord, true));
+            for(let x=width; x>=0; x-=50) ctx.lineTo(x, getCurveY(x, margin, true)); ctx.fill();
+        }
+
+        // 3. 河流主区域绘制
+        let riverPath = new Path2D();
+        riverPath.moveTo(0, getCurveY(0, margin, false));
+        for(let x=0; x<=width; x+=50) riverPath.lineTo(x, getCurveY(x, margin, false));
+        for(let x=width; x>=0; x-=50) riverPath.lineTo(x, getCurveY(x, margin, true));
+        riverPath.closePath();
+
+        ctx.save(); ctx.clip(riverPath);
+        
+        // 梦幻水底透视斑块
+        underWaterPatches.forEach(p => {
+            let grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
+            grd.addColorStop(0, `rgba(0, 50, 100, ${p.op})`); grd.addColorStop(1, 'rgba(0, 50, 100, 0)');
+            ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+        });
+        
+        // 更具透亮感的渐变水面
+        let gradient = ctx.createLinearGradient(0, margin, 0, height - margin);
+        gradient.addColorStop(0, rgbToStr(env.waterBase, 0.65)); // 降低不透明度，显得透亮
+        gradient.addColorStop(0.5, rgbToStr(lerpColor(env.waterBase, env.waterDeep, waterLevel), 0.85));
+        gradient.addColorStop(1, rgbToStr(env.waterBase, 0.65));
+        ctx.fillStyle = gradient; ctx.fill(riverPath);
+
+        // 动态波纹
+        let layers =[
+            { count: 3+turbulence*8, amp: 20+turbulence*40, speed: 0.02+turbulence*0.06, width: 3+turbulence*3, color: `rgba(0,100,150,${0.1+turbulence*0.2})` },
+            { count: 4+turbulence*12, amp: 15+turbulence*30, speed: 0.03+turbulence*0.08, width: 2+turbulence*2, color: `rgba(255,255,255,${0.15+turbulence*0.25})` },
+            { count: 2+turbulence*6, amp: 10+turbulence*20, speed: 0.04+turbulence*0.1, width: 1.5, color: `rgba(255,255,255,${0.4+turbulence*0.4})` }
+        ];
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        layers.forEach((layer, lIdx) => {
+            ctx.strokeStyle = layer.color; ctx.lineWidth = layer.width;
+            for (let i = 0; i < layer.count; i++) {
+                ctx.beginPath();
+                let yBase = margin + (height - margin*2) * ((i + 1) / (layer.count + 1));
+                for (let x = -50; x < width + 50; x += 40) {
+                    let toff = globalFrames * layer.speed;
+                    let y = yBase + Math.sin(x*0.01+toff+i+lIdx)*layer.amp + Math.cos(x*0.02-toff*0.8+i)*layer.amp*0.5;
+                    y = Math.max(getCurveY(x, margin, false)+10, Math.min(getCurveY(x, margin, true)-10, y)); 
+                    if (x === -50) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+        });
+        ctx.restore(); // 取消裁剪
+
+        // 4. 夜间星空
+        if (timeOfDay > 18 || timeOfDay < 6) {
+            let op = timeOfDay > 18 ? Math.min(1, (timeOfDay-18)/1.5) : Math.min(1, (6-timeOfDay)/1.5);
+            stars.forEach(s => {
+                s.b += 0.02; let alpha = ((Math.sin(s.b) + 1)/2) * op;
+                ctx.fillStyle = `rgba(255,255,255,${alpha})`; let sx = s.x * width, sy = s.y * height;
+                ctx.beginPath(); ctx.arc(sx, sy, s.s, 0, Math.PI*2); ctx.fill();
+                if (sy > margin+20 && sy < height-margin-20) {
+                    ctx.fillStyle = `rgba(255,255,255,${alpha*0.4})`;
+                    ctx.beginPath(); ctx.ellipse(sx, sy+2, s.s*1.5, s.s*0.5, 0, 0, Math.PI*2); ctx.fill();
+                }
+            });
+        }
+
+        // 5. 元素绘制 (太阳伞、石子、水花)
+        decorations.forEach(d => d.draw(ctx, shadowVec, shadowCol));
+
+        stones.forEach(s => s.update());
+        stones.filter(s => s.state === 'settled').forEach(s => s.draw(ctx, shadowVec, shadowCol, waterLevel));
+        stones.filter(s => s.state !== 'settled').forEach(s => s.draw(ctx, shadowVec, shadowCol, waterLevel));
+
+        for (let i = ripples.length - 1; i >= 0; i--) {
+            let r = ripples[i]; r.radius += r.speed; r.alpha -= 0.02;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${r.alpha})`; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.ellipse(r.x, r.y, r.radius, r.radius*0.5, 0, 0, Math.PI*2); ctx.stroke();
+            if (r.alpha <= 0) ripples.splice(i, 1);
+        }
+
+        // 6. 极高空云层 (距离拉长)
+        for (let i = clouds.length - 1; i >= 0; i--) {
+            let c = clouds[i]; c.x += c.speed;
+            ctx.save(); ctx.translate(c.x, c.y); ctx.scale(c.scale, c.scale);
+            ctx.fillStyle = shadowCol; ctx.beginPath();
+            c.parts.forEach(p => { ctx.moveTo(p.ox + shadowVec.dx*c.altitude, p.oy + shadowVec.dy*c.altitude); ctx.arc(p.ox + shadowVec.dx*c.altitude, p.oy + shadowVec.dy*c.altitude, p.r, 0, Math.PI*2); });
+            ctx.fill();
+            ctx.fillStyle = rgbToStr(env.cloud, 0.85); ctx.beginPath();
+            c.parts.forEach(p => { ctx.moveTo(p.ox, p.oy); ctx.arc(p.ox, p.oy, p.r, 0, Math.PI*2); }); ctx.fill();
+            ctx.restore();
+            if (c.x > width + 400) clouds.splice(i, 1);
+        }
+        if (Math.random() < 0.002 && clouds.length < 6) {
+            clouds.push({ x: -200, y: Math.random()*height, scale: Math.random()*0.5+0.5, speed: Math.random()*0.15+0.05, altitude: Math.random() * 30 + 20, parts: Array.from({length: 4 + Math.floor(Math.random()*4)}, () => ({ ox: (Math.random()-0.5)*100, oy: (Math.random()-0.5)*50, r: 20 + Math.random()*50 }))});
+        }
+
+        // 7. 平滑天气蒙版与雨滴
+        if(curWeatherOp > 0.01) {
+            let dropCount = Math.floor(drops.length * curWeatherOp);
+            for(let i=0; i<dropCount; i++) drops[i].draw(ctx, curWeatherOp*0.5), drops[i].update();
+            ctx.fillStyle = `rgba(30, 45, 65, ${curWeatherOp * 0.35})`; 
+            ctx.fillRect(0,0,width,height);
+        }
+
+        requestAnimationFrame(render);
+    }
+
+    // --- 启动引擎 ---
+    resize();
+    updateLogic();
+    render();
+    
+</script>
+</body>
+</html>
