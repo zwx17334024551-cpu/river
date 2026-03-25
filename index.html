@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>听着条静静的小河</title>
+    <title>听着一条静静的小河</title>
     <!-- 引入优雅且带一点圆润感的英文字体 -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
     <style>
@@ -130,34 +130,40 @@
         #overlay-content h1 { font-size: 3.5rem; font-weight: 900; margin-bottom: 15px; letter-spacing: 4px; }
         #overlay-content p { font-size: 1.2rem; font-weight: 700; opacity: 0.7; letter-spacing: 2px; }
 
-        /* ======= 手机端极致排版 (完全防遮挡) ======= */
+        /* ======= 手机端极致排版 (完全解决重叠与定位问题) ======= */
         @media (max-width: 768px) {
-            #ui-panel { bottom: 15px; right: 12px; left: 12px; padding: 15px; gap: 12px; border-radius: 20px;}
+            #ui-panel { bottom: 20px; right: 15px; left: 15px; padding: 18px; gap: 15px; border-radius: 20px;}
             .control-group label { font-size: 10px; margin-bottom: -2px;}
             .control-group input[type="range"] { width: 100%; height: 12px; }
             .control-group input[type="range"]::-webkit-slider-thumb { height: 16px; width: 16px; margin-top: -5px; }
-            .btn-group { gap: 8px; }
+            .btn-group { gap: 10px; }
             button.action-btn { padding: 10px; font-size: 12px; border-radius: 14px; }
             
-            /* 数据面板移至上方，采用极简两列横排 */
-            #stats { 
-                bottom: 145px; left: 12px; right: 12px; 
-                flex-direction: row; flex-wrap: wrap; 
-                padding: 12px 15px; gap: 8px 0; border-radius: 18px;
-            }
-            .stat-item { width: 50%; font-size: 11px; gap: 5px; justify-content: space-between; padding-right: 15px;}
-            .stat-item:nth-child(even) { padding-right: 0; padding-left: 10px; }
-            .stat-val { font-size: 12px;}
-            
-            #top-ui { top: 15px; left: 12px; }
+            #top-ui { top: 20px; left: 15px; }
             .top-btn { width: 38px; height: 38px; }
             .top-btn svg { width: 18px; height: 18px; }
             
-            #time-dial-wrapper { top: 15px; right: 12px; width: 65px; height: 65px; }
+            /* 数据面板移至左上角 (音量按钮下方)，采用单列竖排，并去掉背景 */
+            #stats { 
+                top: 75px; bottom: auto; left: 15px; right: auto;
+                flex-direction: column; 
+                padding: 0; gap: 8px; border-radius: 0;
+                background: transparent !important; 
+                box-shadow: none !important; 
+                backdrop-filter: none !important; 
+                -webkit-backdrop-filter: none !important;
+                /* 增加轻微的文字白底发光，确保在失去背景后文字不会和水流糊在一起 */
+                text-shadow: 0 1px 3px rgba(255,255,255,0.8);
+            }
+            .stat-item { width: auto; font-size: 12px; gap: 10px; justify-content: flex-start; padding-right: 0;}
+            .stat-item:nth-child(even) { padding-left: 0; }
+            .stat-val { font-size: 13px;}
+            
+            #time-dial-wrapper { top: 20px; right: 15px; width: 60px; height: 60px; }
             #time-dial-text { font-size: 11px; margin-top: 3px;}
             #time-dial-knob { width: 10px; height: 10px; top: 4px; }
             
-            #toast { font-size: 12px; padding: 12px 20px; top: 90px; width: 85%; white-space: normal;}
+            #toast { font-size: 12px; padding: 12px 20px; top: 120px; width: 85%; white-space: normal;}
             
             #overlay-content h1 { font-size: 2.5rem; }
             #overlay-content p { font-size: 1rem; }
