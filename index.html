@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>听着一条静静的小河</title>
-    <!-- 引入圆润优雅的英文字体 -->
+    <!-- 引入优雅且带一点圆润感的英文字体 -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
     <style>
         /* 动态 CSS 变量（由 JS 随时间动态赋值，实现扁平多彩 UI 过渡） */
@@ -19,13 +19,13 @@
         body, html { 
             width: 100%; height: 100%; overflow: hidden; 
             background-color: #1a2035; 
-            /* 字体栈：优先西文圆体，中文降级到系统圆润字体 */
+            /* 字体栈：优先西文圆润体，中文自动降级到系统自带的圆幼/黑体 */
             font-family: 'Nunito', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
             user-select: none; -webkit-user-select: none;
         }
         canvas { display: block; width: 100%; height: 100%; }
 
-        /* 全局统一扁平可爱风格类 */
+        /* 全局统一扁平优雅风格类 */
         .cute-panel {
             background: var(--ui-bg); color: var(--ui-text);
             border-radius: 24px; transition: background 0.8s ease, color 0.8s ease;
@@ -122,7 +122,7 @@
         
         #overlay-content {
             display: flex; flex-direction: column; align-items: center;
-            /* 应用水波滤镜 */
+            /* 关键点：调用下方定义的 SVG 流体波浪滤镜 */
             filter: url(#water-wave); -webkit-filter: url(#water-wave);
             color: #0ea5e9; text-align: center;
         }
@@ -169,11 +169,11 @@
     <!-- 容纳流体形变滤镜 -->
     <svg id="svg-filters">
         <filter id="water-wave" x="-20%" y="-20%" width="140%" height="140%">
-            <!-- baseFrequency 制造水波纹理，使用 animate 让波浪持续涌动 -->
+            <!-- baseFrequency 制造水波纹理，使用 animate 让波浪持续自然涌动 -->
             <feTurbulence type="fractalNoise" baseFrequency="0.015 0.05" numOctaves="2" result="noise">
                 <animate attributeName="baseFrequency" values="0.015 0.05; 0.02 0.07; 0.015 0.05" dur="5s" repeatCount="indefinite" />
             </feTurbulence>
-            <!-- displacement map 进行画面畸变扭曲，起初轻微波动 (scale=5) -->
+            <!-- displacement map 进行画面畸变扭曲，待机时起初轻微波动 (scale=5) -->
             <feDisplacementMap id="liquid-disp" in="SourceGraphic" in2="noise" scale="5" xChannelSelector="R" yChannelSelector="G"/>
         </filter>
     </svg>
@@ -539,7 +539,7 @@
     window.addEventListener('touchmove', (e) => { if(isDraggingTime) { e.preventDefault(); updateTimeFromEvent(e); } }, {passive:false});
     window.addEventListener('touchend', () => { isDraggingTime = false; });
 
-    // 音频安全控制（已彻底修复导致卡住的Bug）
+    // 音频安全控制
     const audio = document.getElementById('bgm');
     let isPlaying = false;
     function toggleAudio() {
@@ -550,14 +550,10 @@
             isPlaying = false;
         } else {
             audio.volume = 0;
-            // 异步播放，防止报错阻塞UI
             let playPromise = audio.play();
             if (playPromise !== undefined) {
                 playPromise.then(_ => {
-                    // 仅在音频加载且允许时才快进
-                    if (audio.currentTime < 3.0 && audio.readyState >= 2) {
-                        audio.currentTime = 3.0;
-                    }
+                    if (audio.currentTime < 3.0 && audio.readyState >= 2) { audio.currentTime = 3.0; }
                     let vol = 0; 
                     let fade = setInterval(() => { 
                         vol += 0.05; 
@@ -567,9 +563,7 @@
                     document.getElementById('icon-vol').style.display = 'block';
                     document.getElementById('icon-mute').style.display = 'none';
                     isPlaying = true;
-                }).catch(error => {
-                    console.log("音频需用户显式交互:", error);
-                });
+                }).catch(error => { console.log("音频需显式交互:", error); });
             }
         }
     }
@@ -583,34 +577,34 @@
         if (this.dataset.clicked) return; // 防连击
         this.dataset.clicked = "true";
         
+        // 音乐必须立刻同步触发，否则会被部分手机浏览器拦截
+        toggleAudio(); 
+        
         let startTime = performance.now();
-        const duration = 1200; // 动画时长 1.2秒
+        const duration = 1500; // 动画时长 1.5秒，给足水波溶解的时间
         
         function dissolveFrame(time) {
             let elapsed = time - startTime;
             let progress = Math.min(elapsed / duration, 1);
             
-            // scale 呈指数级狂飙，形成极致的水融化拉扯感
+            // 水波激荡程度呈指数级狂飙，形成水融化的剧烈拉扯感
             let currentScale = 5 + Math.pow(progress, 3) * 150; 
-            liquidDisp.setAttribute('scale', currentScale);
+            if (liquidDisp) liquidDisp.setAttribute('scale', currentScale);
             
             // 文本和背景透明度平滑降低
-            overlayContent.style.opacity = 1 - progress;
+            overlayContent.style.opacity = 1 - Math.pow(progress, 2);
             playOverlay.style.backgroundColor = `rgba(240, 248, 255, ${0.95 * (1 - progress)})`;
             
             if (progress < 1) {
                 requestAnimationFrame(dissolveFrame);
             } else {
-                playOverlay.style.display = 'none'; // 彻底销毁遮罩
-                resize(); 
-                toggleAudio(); 
-                updateLogic();
+                playOverlay.style.display = 'none'; // 动画结束彻底销毁遮罩
             }
         }
         requestAnimationFrame(dissolveFrame);
     });
 
-    /** --- 核心渲染与光影计算 (不删减任何一滴水) --- */
+    /** --- 核心渲染与光影计算 (完全保留) --- */
     function getCurveY(x, margin, isBottom, offset=0) {
         let wave = Math.sin(x * 0.005 + offset) * 15;
         return isBottom ? height - margin + wave : margin + wave;
@@ -747,7 +741,8 @@
         requestAnimationFrame(render);
     }
 
-    // 引擎启动点，暂不触发resize，交由点击封面后触发
+    // 修复：必须第一时间初始化画布尺寸，否则一切物理绘制都会崩溃报错！
+    resize();
     updateLogic();
     render();
     
